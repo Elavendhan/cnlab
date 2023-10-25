@@ -1,0 +1,45 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+int main() {
+    int client_socket;
+    struct sockaddr_in server_addr;
+
+    client_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (client_socket == -1) {
+        perror("Socket creation failed");
+        return 1;
+    }
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(12345);
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    if (connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+        perror("Connection failed");
+        return 1;
+    }
+
+    float basic, hra, da, pt, epf;
+    printf("Enter Basic Pay: ");
+    scanf("%f", &basic);
+    printf("Enter HRA: ");
+    scanf("%f", &hra);
+    printf("Enter DA: ");
+    scanf("%f", &da);
+    printf("Enter PT: ");
+    scanf("%f", &pt);
+    printf("Enter EPF: ");
+    scanf("%f", &epf);
+
+    float data[5] = {basic, hra, da, pt, epf};
+    send(client_socket, data, sizeof(data), 0);
+
+    close(client_socket);
+
+    return 0;
+}
+

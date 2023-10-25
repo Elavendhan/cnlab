@@ -1,0 +1,71 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+float calculate_net_salary(float basic, float hra, float da, float pt, float epf) {
+    return basic + hra + da - pt - epf;
+}
+
+int main() {
+    int server_socket, client_socket;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t addr_size;
+
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket == -1) {
+        perror("Socket creation failed");
+        return 1;
+    }
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(12345);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+        perror("Binding failed");
+        return 1;
+    }
+
+    if (listen(server_socket, 10) == -1) {
+        perror("Listening failed");
+        return 1;
+    }
+
+    printf("Server is listening...\n");
+
+    addr_size = sizeof(client_addr);
+
+    while (1) {
+        client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &addr_size);
+        if (client_socket == -1) {
+            perror("Accepting connection failed");
+            continue;
+        }
+
+        printf("Connected to client\n");
+
+        float data[5];
+        recv(client_socket, data, sizeof(data), 0);
+
+        float basic = data[0];
+        float hra = data[1];
+        float da = data[2];
+        float pt = data[3];
+        float epf = data[4];
+
+        float net_salary = calculate_net_salary(basic, hra, da, pt, epf);
+
+        printf("Received details from client:\n");
+        printf("Basic: %.2f\nHRA: %.2f\nDA: %.2f\nPT: %.2f\nEPF: %.2f\n", basic, hra, da, pt, epf);
+        printf("Net Salary: %.2f\n", net_salary);
+
+        close(client_socket);
+    }
+
+    close(server_socket);
+
+    return 0;
+}
+
